@@ -325,15 +325,171 @@ Now run the unit test either from the Java IDE or by using `mvn test`.
 
 ## Adding Health Indicator
 
-The health indicator requires the dependency spring-boot-starter-actuator. 
+The health indicator requires the dependency spring-boot-starter-actuator (see [here](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.endpoints) for the current documentation of Spring Boot Actuator)
 
 Add the following dependency to the `pom.xml`
 
 ```xml
 <dependency>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+
+If you prefer using webflux, you can then include `spring-boot-starter-webflux` instead of the standard web dependency.
+
+By default, all endpoints except for `shutdown` are enabled but only the `health` endpoint is exposed over HTTP and JMX.
+
+(Re)Start the service and navigate to <http://localhost:8080/actuator/health> to see the health indicator of the service:
+
+```json
+{"status":"UP"}
+```
+
+By default only the global status is visible (UP or DOWN). To show the details, the property `management.endpoint.health.show-details` must be set to `ALWAYS` or `WHEN_AUTHORIZED`
+
+```yml
+management:
+  endpoint:
+    health.show-details: ALWAYS
+```
+
+(Re)Start the service and navigate to <http://localhost:8080/actuator/health> to see the health indicator with the additional details: 
+
+```json
+{
+   "status":"UP",
+   "components":{
+      "binders":{
+         "status":"UP",
+         "components":{
+            "kstream":{
+               "status":"UP",
+               "details":{
+                  "spring-boot-springcloud-kafkastreams":{
+                     "threadDetails":{
+                        "spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-StreamThread-1":{
+                           "adminClientId":"spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-admin",
+                           "restoreConsumerClientId":"spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-StreamThread-1-restore-consumer",
+                           "threadState":"RUNNING",
+                           "producerClientIds":[
+                              "spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-StreamThread-1-producer"
+                           ],
+                           "standbyTasks":{
+                              
+                           },
+                           "activeTasks":{
+                              "partitions":[
+                                 "partition=0, topic=test-kstream-spring-cloudstream-input-topic"
+                              ],
+                              "taskId":{
+                                 "topicGroupId":0,
+                                 "partition":0
+                              }
+                           },
+                           "consumerClientId":"spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-StreamThread-1-consumer",
+                           "threadName":"spring-boot-springcloud-kafkastreams-f534264a-cbae-4077-9341-974e4baecc53-StreamThread-1"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      "diskSpace":{
+         "status":"UP",
+         "details":{
+            "total":494384795648,
+            "free":39005593600,
+            "threshold":10485760,
+            "path":"/Users/guido.schmutz/Documents/GitHub/gschmutz/kafkastreams-and-ksqldb-workshop/04b-using-kafka-streams-from-springcloud-springboot/src/kafka-streams-spring-cloudstream/.",
+            "exists":true
+         }
+      },
+      "ping":{
+         "status":"UP"
+      }
+   }
+}
+```
+
+### Customize Prefix
+
+Actuator allows for customizing the prefix for the management endpoints. So if you don't like the `/actuator` prefix, you can use the `management.endpoints.web.base-path` property to change it, i.e. to `management`
+
+```yml
+management:
+  endpoints:
+    web:
+      base-path: "/management"
+```
+
+## Kafka Streams Metrics
+
+Spring Cloud Stream Kafka Streams binder provides Kafka Streams metrics which can be exported through a Micrometer MeterRegistry.
+
+First add metrics to the property `management.endpoints.web.exposure.include`:
+
+```yml
+management:
+  endpoint:
+    health.show-details: ALWAYS
+
+  endpoints:
+    web:
+      exposure:
+        include: metrics
+```
+
+You can also use * to expose all of the Actuator endpoints.
+
+Now navigate to <http://localhost:8080/actuator/metrics> to get a list of all the available metrics or access them individually using the URI with the metric name (`/actuator/metrics/<meteric-name>`), e.g. using
+
+<http://localhost:8080/actuator/metrics/kafka.consumer.fetch.manager.records.consumed.total>
+
+you get an output similar to that (will be `0` if you haven't processed any messages yet)
+
+```json
+{
+   "name":"kafka.consumer.fetch.manager.records.consumed.total",
+   "description":"The total number of records consumed for a topic",
+   "measurements":[
+      {
+         "statistic":"COUNT",
+         "value":2.0
+      }
+   ],
+   "availableTags":[
+      {
+         "tag":"topic",
+         "values":[
+            "test-kstream-spring-cloudstream-input-topic"
+         ]
+      },
+      {
+         "tag":"spring.id",
+         "values":[
+            "stream-builder-process"
+         ]
+      },
+      {
+         "tag":"kafka.version",
+         "values":[
+            "3.3.1"
+         ]
+      },
+      {
+         "tag":"client.id",
+         "values":[
+            "spring-boot-springcloud-kafkastreams-168c3229-13c1-4ce5-89dc-f13e17fa7b53-StreamThread-1-consumer"
+         ]
+      }
+   ]
+}
 ```
 
 ## Add Kafka Streams Topology visualization
@@ -344,10 +500,57 @@ Kafka Streams binder provides the following actuator endpoints for retrieving th
 
 `/actuator/kafkastreamstopology/<application-id of the processor>`
 
-You need to include the actuator and web dependencies from Spring Boot to access these endpoints. Add the following dependencies to the `pom.xml`
 
-```xml
+Add `kafkastreamstopology` to the `management.endpoints.web.exposure.include property`. 
 
+```yml
+management:
+  endpoint:
+    health.show-details: ALWAYS
+
+  endpoints:
+    web:
+      exposure:
+        include: metrics, kafkastreamstopology
 ```
 
-Further, you also need to add `kafkastreamstopology` to `management.endpoints.web.exposure.include property`. 
+(Re)Start the service and navigate to <http://localhost:8080/actuator/kafkastreamstopology> to see the topology. 
+
+```json
+["Topologies:\n   Sub-topology: 0\n    Source: KSTREAM-SOURCE-0000000000 (topics: [test-kstream-spring-cloudstream-input-topic])\n      --> KSTREAM-MAPVALUES-0000000002, KSTREAM-PEEK-0000000001\n    Processor: KSTREAM-MAPVALUES-0000000002 (stores: [])\n      --> KSTREAM-PEEK-0000000003, KSTREAM-SINK-0000000004\n      <-- KSTREAM-SOURCE-0000000000\n    Processor: KSTREAM-PEEK-0000000001 (stores: [])\n      --> none\n      <-- KSTREAM-SOURCE-0000000000\n    Processor: KSTREAM-PEEK-0000000003 (stores: [])\n      --> none\n      <-- KSTREAM-MAPVALUES-0000000002\n    Sink: KSTREAM-SINK-0000000004 (topic: test-kstream-spring-cloudstream-output-topic)\n      <-- KSTREAM-MAPVALUES-0000000002\n\n"]
+```
+
+Use curl with jq and sed to replace the newline characters (`\n`) with "real" newlines 
+
+`curl localhost:8080/actuator/kafkastreamstopology | jq . | sed 's/\\n/\n/g'`
+
+to make it more readable
+
+
+```json
+[
+  "Topologies:
+   Sub-topology: 0
+    Source: KSTREAM-SOURCE-0000000000 (topics: [test-kstream-spring-cloudstream-input-topic])
+      --> KSTREAM-MAPVALUES-0000000002, KSTREAM-PEEK-0000000001
+    Processor: KSTREAM-MAPVALUES-0000000002 (stores: [])
+      --> KSTREAM-PEEK-0000000003, KSTREAM-SINK-0000000004
+      <-- KSTREAM-SOURCE-0000000000
+    Processor: KSTREAM-PEEK-0000000001 (stores: [])
+      --> none
+      <-- KSTREAM-SOURCE-0000000000
+    Processor: KSTREAM-PEEK-0000000003 (stores: [])
+      --> none
+      <-- KSTREAM-MAPVALUES-0000000002
+    Sink: KSTREAM-SINK-0000000004 (topic: test-kstream-spring-cloudstream-output-topic)
+      <-- KSTREAM-MAPVALUES-0000000002
+
+"
+]
+```
+
+You can now use <https://zz85.github.io/kafka-streams-viz/> or <https://gaetancollaud.github.io/kafka-streams-visualization/> to render a graphical visualization of the topology.
+
+![](./images/kafkastreamstopology-vis.png)
+
+

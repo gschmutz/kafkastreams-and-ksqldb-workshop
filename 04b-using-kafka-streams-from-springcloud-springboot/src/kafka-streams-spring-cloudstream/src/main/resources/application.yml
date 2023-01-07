@@ -25,3 +25,12 @@ logging:
   level:
     root: info
     com.trivadis.kafkws.springboot.kafkastreamsspringcloudstream: debug
+
+management:
+  endpoint:
+    health.show-details: ALWAYS
+
+  endpoints:
+    web:
+      exposure:
+        include: metrics, kafkastreamstopology
