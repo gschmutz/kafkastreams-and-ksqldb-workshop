@@ -1,0 +1,79 @@
+
+server:
+  port: 8080
+
+spring:
+  boot:
+    admin:
+      client:
+        #api-path: /instances
+        #url: http://localhost:8080
+        url: http://dataplatform:28293
+        instance.prefer-ip: true
+        #instance.service-base-url: http://127.0.0.1:8080
+        instance.name: Kafka Streams Application
+        instance.management-url: http://192.168.1.104:8080/actuator
+        #instance.management-base-url: http://127.0.0.1:8080
+
+  application:
+    name: "spring-boot-kafkastreams"
+
+  cloud:
+    stream:
+      function:
+        definitin: process
+        bindings:
+          process-in-0: test-kstream-spring-cloudstream-input-topic
+          process-out-0: test-kstream-spring-cloudstream-output-topic
+
+      kafka:
+        streams.binder:
+          applicationId: spring-boot-springcloud-kafkastreams
+          configuration:
+            commit.interval.ms: 100
+            cache.max.bytes.buffering: 0
+            default.key.serde: org.apache.kafka.common.serialization.Serdes$VoidSerde
+            default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+#            default.deserialization.exception.handler: org.apache.kafka.streams.errors.LogAndFailExceptionHandler
+
+  kafka:
+    bootstrap-servers: dataplatform:9092
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  jmx:
+    enabled: true
+
+#Enable metrics
+management:
+  metrics:
+    export:
+      wavefront:
+        enabled: false
+      prometheus:
+        enabled: false
+  endpoint:
+    metrics:
+      enabled: true
+    health:
+      show-details: ALWAYS
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    loggers:
+      enabled: true
+
+  info:
+    env:
+      enabled: true
+
+logging:
+  file:
+    path: /tmp/spring-logs
+  level:
+    root: INFO
