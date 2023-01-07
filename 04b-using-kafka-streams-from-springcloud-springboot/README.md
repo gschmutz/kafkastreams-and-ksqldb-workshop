@@ -527,7 +527,7 @@ Use curl with jq and sed to replace the newline characters (`\n`) with "real" ne
 to make it more readable
 
 
-```json
+```
 [
   "Topologies:
    Sub-topology: 0
