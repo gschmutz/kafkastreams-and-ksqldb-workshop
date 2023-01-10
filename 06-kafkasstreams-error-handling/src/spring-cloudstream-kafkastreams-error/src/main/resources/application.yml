@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: "cloudstream-kafkastreams-error"
+
+  cloud:
+    stream:
+      bindings:
+        process-in-0:
+          destination: test-kstream-spring-cloudstream-error-input-topic
+        process-out-0:
+          destination: test-kstream-spring-cloudstream-error-output-topic
+
+      kafka:
+        streams.binder:
+          applicationId: spring-boot-springcloud-kafkastreams
+          configuration:
+            commit.interval.ms: 100
+            cache.max.bytes.buffering: 0
+            default.key.serde: org.apache.kafka.common.serialization.Serdes$VoidSerde
+            default.value.serde: org.apache.kafka.common.serialization.Serdes$LongSerde
+
+  kafka:
+    bootstrap-servers: dataplatform:9092
+
+spring.cloud.stream.kafka.streams.binder.deserializationExceptionHandler: sendToDlq
+
+spring.cloud.stream.kafka.streams.bindings.process-in-0.consumer:
+  dlqName: dlq-topic
+  dlqPartitions: 1
+  enableDlq: true
+
+logging:
+  level:
+    root: info

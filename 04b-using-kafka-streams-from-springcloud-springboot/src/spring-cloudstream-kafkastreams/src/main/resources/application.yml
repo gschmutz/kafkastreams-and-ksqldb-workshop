@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: "spring-boot-kafkastreams"
+
+  cloud:
+    stream:
+      bindings:
+        process-in-0:
+          destination: test-kstream-spring-cloudstream-input-topic
+        process-out-0:
+          destination: test-kstream-spring-cloudstream-output-topic
+
+      kafka:
+        streams.binder:
+          applicationId: spring-boot-springcloud-kafkastreams
+          configuration:
+            commit.interval.ms: 100
+            cache.max.bytes.buffering: 0
+            default.key.serde: org.apache.kafka.common.serialization.Serdes$VoidSerde
+            default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+
+  kafka:
+    bootstrap-servers: dataplatform:9092
+
+logging:
+  level:
+    root: info
+    com.trivadis.kafkws.springboot.kafkastreamsspringcloudstream: debug
+
+management:
+  endpoint:
+    health.show-details: ALWAYS
+
+  endpoints:
+    web:
+      exposure:
+        include: metrics, kafkastreamstopology

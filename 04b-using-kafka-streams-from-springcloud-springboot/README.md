@@ -1,4 +1,4 @@
-# Using Kafka Streams from Spring Cloud Stream & Spring Boot
+# Kafka Streams with Spring Boot & Spring Cloud Stream
 
 In this workshop we will learn how to process messages using the [Kafka Streams Binder of Spring Cloud Stream](https://docs.spring.io/spring-cloud-stream/docs/current/reference/html/spring-cloud-stream-binder-kafka.html#_kafka_streams_binder) from Spring Boot. 
 
@@ -8,7 +8,7 @@ We will create a Spring Boot application and implement the same basic processor 
 
 First, let’s navigate to [Spring Initializr](https://start.spring.io/) to generate our project. Our project will need the Apache Kafka support. 
 
-Select Generate a **Maven Project** with **Java** and Spring Boot **3.0.1**. Enter `com.trivadis.kafkaws.springboot.cloudstreams` for the **Group**, `kafka-streams` for the **Artifact** field and `Kafka Streams project with Spring Boot and Cloud Stream` for the **Description** field. 
+Select Generate a **Maven Project** with **Java** and Spring Boot **3.0.1**. Enter `com.trivadis.kafkaws.springboot` for the **Group**, `spring-cloudstream-kafkastreams` for the **Artifact** field, `Kafka Streams project with Spring Boot and Cloud Stream` for the **Description** field and adapt the **Package Name** to `com.trivadis.kafkaws.springboot.cloudstream.kafkastreams`. 
 
 ![Alt Image Text](./images/spring-initializr.png "Spring Initializr")
 
@@ -99,10 +99,11 @@ spring:
 
   cloud:
     stream:
-      function:
-        bindings:
-          process-in-0: test-kstream-spring-cloudstream-input-topic
-          process-out-0: test-kstream-spring-cloudstream-output-topic
+      bindings:
+        process-in-0:
+          destination: test-kstream-spring-cloudstream-input-topic
+        process-out-0:
+          destination: test-kstream-spring-cloudstream-output-topic
 
       kafka:
         streams.binder:
@@ -554,3 +555,16 @@ You can now use <https://zz85.github.io/kafka-streams-viz/> or <https://gaetanco
 ![](./images/kafkastreamstopology-vis.png)
 
 
+## State Cleanup
+
+By default, no local state is cleaned up when the binding is stopped.
+
+To modify this behaviour simply add a single `CleanupConfig` `@Bean` to the application context:
+
+```
+    @Bean
+    public CleanupConfig cleanupConfig() {
+        // do not cleanup on start (false), but cleanup on stop (true)
+        return new CleanupConfig(false, true);
+    }
+```
