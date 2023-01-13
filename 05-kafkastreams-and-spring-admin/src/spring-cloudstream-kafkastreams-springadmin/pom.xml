@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.trivadis.kafkws.springboot.cloudstream</groupId>
-	<artifactId>kafka-streams</artifactId>
+	<artifactId>spring-cloudstream-kafkastreams-springadmin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>kafka-streams</name>
 	<description>Kafka Streams project with Spring Boot and Cloud Stream</description>

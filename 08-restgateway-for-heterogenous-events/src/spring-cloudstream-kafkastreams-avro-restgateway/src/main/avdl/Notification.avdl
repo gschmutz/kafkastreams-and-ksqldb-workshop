@@ -1,0 +1,8 @@
+@namespace("com.trivadis.kafkaws")
+
+protocol NotificationProtocol {
+	record Notification {
+		long id;
+		string message;
+	}
+}

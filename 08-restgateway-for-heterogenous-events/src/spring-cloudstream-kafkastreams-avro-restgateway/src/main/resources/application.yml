@@ -1,0 +1,33 @@
+topic:
+  name: test-kstream-spring-cloudstream-input-topic
+  replication-factor: 3
+  partitions: 8
+
+spring:
+  cloud:
+    stream:
+      kafka:
+        binder:
+          configuration:
+            schema.registry.url: http://${DATAPLATFORM_IP}:8081
+        bindings:
+          send-binding-out-0:
+            producer:
+              configuration:
+                value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+                schema.registry.url: http://${DATAPLATFORM_IP}:8081
+                value:
+                  subject.name.strategy: io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
+
+
+      bindings:
+        send-binding-out-0:
+          destination: ${topic.name}
+          producer:
+            useNativeEncoding: true
+
+  kafka:
+    bootstrap-servers: ${DATAPLATFORM_IP}:9092
+
+server:
+  port: 8081

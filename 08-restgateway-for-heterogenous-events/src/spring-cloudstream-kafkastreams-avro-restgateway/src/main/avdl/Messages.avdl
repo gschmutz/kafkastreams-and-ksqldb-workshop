@@ -1,0 +1,10 @@
+@namespace("com.trivadis.kafkaws")
+
+protocol MessagesProtocol {
+	import idl "Alert.avdl";
+	import idl "Notification.avdl";
+
+	record Messages {
+		array<union{Notification,Alert}> items;
+	}
+}

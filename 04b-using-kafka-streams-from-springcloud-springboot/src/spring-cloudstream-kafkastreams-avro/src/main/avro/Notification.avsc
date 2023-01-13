@@ -1,0 +1,9 @@
+{
+  "namespace" : "com.trivadis.kafkaws",
+  "type" : "record",
+  "name" : "Notification",
+  "fields" : [
+    {"name":"id","type":"long"},
+    {"name":"message", "type":"string" }
+  ]
+}

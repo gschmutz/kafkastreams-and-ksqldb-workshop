@@ -21,7 +21,7 @@ spring:
   cloud:
     stream:
       function:
-        definitin: process
+        definition: process
         bindings:
           process-in-0: test-kstream-spring-cloudstream-input-topic
           process-out-0: test-kstream-spring-cloudstream-output-topic
