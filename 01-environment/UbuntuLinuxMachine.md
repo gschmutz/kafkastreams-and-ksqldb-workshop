@@ -55,7 +55,7 @@ sudo apt-get install \
     lsb-release
 ```    
 
-Add Docker's offical GPG key
+Add Docker's official GPG key
 
 ```bash    
 sudo mkdir -p /etc/apt/keyrings
@@ -135,7 +135,7 @@ sudo update-alternatives --install /usr/local/bin/docker-compose docker-compose 
 Installing `platys` is optional. It is an [open source tool](http://github.com/trivadispf/platys) we have used to generate the docker-compose stack we will use below.
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/${PLATYS_VERSION}/platys_${PLATYS_VERSION}_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 tar zvxf /tmp/platys.tar.gz 
 sudo mv platys /usr/local/bin/
 sudo chown root:root /usr/local/bin/platys

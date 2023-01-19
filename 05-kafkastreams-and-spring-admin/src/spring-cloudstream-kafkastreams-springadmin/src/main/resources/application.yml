@@ -1,6 +1,6 @@
 
 server:
-  port: 8080
+  port: 8081
 
 spring:
   boot:
@@ -12,7 +12,7 @@ spring:
         instance.prefer-ip: true
         #instance.service-base-url: http://127.0.0.1:8080
         instance.name: Kafka Streams Application
-        instance.management-url: http://192.168.1.104:8080/actuator
+        instance.management-url: http://192.168.1.104:8081/actuator
         #instance.management-base-url: http://127.0.0.1:8080
 
   application:
