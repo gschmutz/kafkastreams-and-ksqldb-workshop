@@ -1,10 +1,10 @@
 @namespace("com.trivadis.kafkaws.avro.v1")
 
-protocol AlertProtocol {
-	record Alert {
-		uuid id;
+protocol MessageProtocol {
+	record Message {
+		long id;
 		string message;
-		string severity;
+		string type;
 		timestamp_ms when;
 	}
 }

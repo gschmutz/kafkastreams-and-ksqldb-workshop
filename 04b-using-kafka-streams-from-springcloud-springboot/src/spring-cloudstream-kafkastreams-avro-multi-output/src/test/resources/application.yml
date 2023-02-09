@@ -1,0 +1,12 @@
+spring:
+  kafka:
+    bootstrap-servers: dataplatform:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        use.latest.version: true
+        value.subject.name.strategy: io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
+    properties:
+      schema.registry.url: http://${DATAPLATFORM_IP}:8081

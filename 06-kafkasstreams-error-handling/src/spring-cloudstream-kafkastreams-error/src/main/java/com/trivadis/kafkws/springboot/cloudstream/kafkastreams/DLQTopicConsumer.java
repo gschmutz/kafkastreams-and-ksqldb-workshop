@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class DLQTopicConsumer {
     private final Log logger = LogFactory.getLog(getClass());
 
-    @KafkaListener(topics = "error.test-kstream-spring-cloudstream-error-input-topic.spring-boot-springcloud-kafkastreams", groupId = "dlq-consumer")
+    @KafkaListener(topics = "test-kstream-spring-cloudstream-error-input-topic", groupId = "dlq-consumer")
     public void listen(@Payload String value,
                        @Header(name = KafkaHeaders.RECEIVED_TOPIC, required = true) String topicName,
                        @Header(name = KafkaHeaders.DLT_ORIGINAL_OFFSET, required = false) Long originalOffset,

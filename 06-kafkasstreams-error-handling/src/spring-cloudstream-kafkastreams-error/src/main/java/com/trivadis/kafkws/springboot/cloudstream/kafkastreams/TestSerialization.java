@@ -98,6 +98,11 @@ public class TestSerialization {
         return value != null ? ByteBuffer.wrap(value).getShort() : null;
     }
 
+    public static Float asFloat(byte[] value) {
+        return value != null ? ByteBuffer.wrap(value).getFloat() : null;
+    }
+
+
     /**
      * Converts bytes to {@link String}.
      *
@@ -202,43 +207,49 @@ public class TestSerialization {
         //Long l = Instant.now().toEpochMilli();
         Long l = 10L;
         Short shortValue = 1;
-        byte[] b = toBytes(l);
-        byte[] bi = toBytes(11);
+        byte[] blong = toBytes(l);
+        byte[] binteger = toBytes(11);
         byte[] bshort = toBytes(shortValue);
-        byte[] bs = new String("Hello World").getBytes(StandardCharsets.UTF_8);
-        int ir = asInt(bi);
-        long lr = asLong(b);
+        byte[] bfloat = toBytes(11.1f);
+        //byte[] bbool = toBytes(true);
+        byte[] bstring = new String("Hello World").getBytes(StandardCharsets.UTF_8);
+        byte[] bstring16 = new String("Hello World from Worblaufen").getBytes(StandardCharsets.UTF_16);
+        int ir = asInt(binteger);
+        long lr = asLong(blong);
+        float fr = asFloat(bfloat);
 
-        String sr = asString(b);
+        String sr = asString(bstring);
 
-        System.out.println(b);
-        System.out.println(ir);
-        System.out.println(lr);
-        System.out.println(sr);
 
-        byte[] vft = bshort;
 
-        System.out.println(looksLikeUTF8(vft));
+        byte[] vft = bstring16;
 
-        if (looksLikeUTF8(vft)) {
+        System.out.println(isValidUTF8(vft));
+        System.out.println(isValidUTF16(vft));
+
+        if (isValidUTF8(vft)) {
             System.out.println("String: " + new String(vft));
+        } else if (isValidUTF16(vft)) {
+            System.out.println("String: " + new String(vft, StandardCharsets.UTF_16));
         } else {
-            try {
-                System.out.println("Long: " + asLong(vft));
-            } catch (Exception e) {
+
                 try {
-                    System.out.println("Integer: " + asInt(vft));
-                } catch (Exception ex) {
-                    System.out.println("Short: " + asShort(vft));
+                    System.out.println("Long: " + asLong(vft));
+                } catch (Exception el) {
+                    try {
+                        System.out.println("Integer: " + asInt(vft));
+                    } catch (Exception ei) {
+                        System.out.println("Short: " + asShort(vft));
+                    }
                 }
-            }
+
         }
 
         //System.out.println("StringUtils:" + StringUtils.newStringUtf8(bs));
     }
 
 
-    static boolean looksLikeUTF8(byte[] utf8) throws UnsupportedEncodingException
+    static boolean isValidUTF8(byte[] utf8) throws UnsupportedEncodingException
     {
         Pattern p = Pattern.compile("\\A(\n" +
                 "  [\\x09\\x0A\\x0D\\x20-\\x7E]             # ASCII\\n" +
@@ -253,5 +264,42 @@ public class TestSerialization {
 
         String phonyString = new String(utf8, "ISO-8859-1");
         return p.matcher(phonyString).matches();
+    }
+
+    public static boolean isValidUTF16(byte[] buffer) {
+        return isValidUTF16(buffer, false);
+    }
+
+    public static boolean isValidUTF16(byte[] buffer, boolean le) {
+        if (buffer.length < 2) {
+            return false;
+        }
+        for (int i = 0; i < buffer.length / 2; i++) {
+            boolean extraByte = false;
+            int c = read16bit(buffer, i, le);
+
+            if (c >= 0xD800 && c < 0xDC00) {
+                // it's a higher surrogate (10 bits)
+                extraByte = true;
+                i++;
+            } else if ((c >= 0xDC00 && c < 0xE000) || c == 0) {
+                return false;
+            }
+            // else it is a simple 2 byte encoding (code points in BMP), and it's valid
+
+            if (extraByte && i < buffer.length / 2) {
+                c = read16bit(buffer, i, le);
+                if (c < 0xDC00 || c >= 0xE000) {
+                    // invalid lower surrogate (10 bits)
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static int read16bit(byte[] buffer, int i, boolean le) {
+        return le ? (buffer[i / 2] & 0xff) | ((buffer[i / 2 + 1] & 0xff) << 8)
+                : ((buffer[i / 2] & 0xff) << 8) | (buffer[i / 2 + 1] & 0xff);
     }
 }

@@ -1,0 +1,8 @@
+@namespace("com.trivadis.kafkaws.avro.v1")
+protocol MessageSentEventProtocol {
+	import idl "Message.avdl";
+
+	record MessageSentEvent {
+		Message message;
+	}
+}

@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.trivadis.kafkws.springboot</groupId>
-	<artifactId>spring-cloudstream-kafkastreams-avro-heterogenous</artifactId>
+	<artifactId>spring-cloudstream-kafkastreams-avro-multi-output</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>kafka-streams-spring-cloudstream-avro</name>
-	<description>Kafka Streams project using heterogenous Avro messages with Spring Boot and Cloud Stream</description>
+	<description>Kafka Streams project producing different messages with Spring Boot and Cloud Stream</description>
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2022.0.0</spring-cloud.version>
