@@ -1,0 +1,10 @@
+@namespace("com.trivadis.kafkaws.avro.v1")
+protocol AlertSentEventProtocol {
+	import idl "Context-v1.avdl";
+	import idl "Alert-v1.avdl";
+
+    record AlertSentEvent {
+		Context context;
+		Alert  alert;
+	}
+}

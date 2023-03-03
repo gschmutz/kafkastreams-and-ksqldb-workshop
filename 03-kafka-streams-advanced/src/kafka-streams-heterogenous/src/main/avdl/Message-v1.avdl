@@ -1,0 +1,11 @@
+@namespace("com.trivadis.kafkaws.avro.v1")
+
+protocol MessageProtocol {
+	import idl "Context-v1.avdl";
+
+	record Message {
+		Context context;
+
+		string message;
+	}
+}

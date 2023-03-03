@@ -16,6 +16,7 @@
         <kafka.version>3.3.1</kafka.version>
         <slf4j.version>1.7.32</slf4j.version>
         <avro.version>1.11.1</avro.version>
+        <avro.compiler.extension.version>0-SNAPSHOT</avro.compiler.extension.version>
     </properties>
 
     <repositories>
@@ -146,9 +147,35 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>com.trivadis.plugins</groupId>
+                <artifactId>avdl2avsc-maven-plugin</artifactId>
+                <version>1.0.1-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>genschema</goal>
+                        </goals>
+                        <configuration>
+                            <inputAvdlDirectory>${basedir}/src/main/avdl</inputAvdlDirectory>
+                            <outputSchemaDirectory>${basedir}/target/generated-sources/avro/schema
+                            </outputSchemaDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>1.9.2</version>
+                <version>${avro.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.sabomichal</groupId>
+                        <artifactId>avro-compiler-extension</artifactId>
+                        <version>${avro.compiler.extension.version}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>schemas</id>
@@ -160,28 +187,31 @@
                             <excludes>
                                 <exclude>**/mapred/tether/**</exclude>
                             </excludes>
-                            <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory>
+                            <sourceDirectory>${basedir}/target/generated-sources/avro/schema</sourceDirectory>
+                            <templateDirectory>${project.basedir}/src/main/resources/velocity/</templateDirectory>
+                            <velocityToolsClassesNames>com.github.sabomichal.avroextensions.AvroGeneratorExtensions</velocityToolsClassesNames>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry-maven-plugin</artifactId>
-                <version>4.0.0</version>
+                <version>3.2.0</version>
                 <configuration>
                     <schemaRegistryUrls>
-                        <param>http://dataplatform:8081</param>
+                        <param>http://${env.DATAPLATFORM_IP}:8081</param>
                     </schemaRegistryUrls>
                     <subjects>
-                        <test-kstream-input-topic-value>src/main/java/com/trivadis/kafkaws/kstream/avro/MyData.avsc</test-kstream-input-topic-value>
+                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/NotificationSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
+                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
+                        <test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/Message.avsc</test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>
                     </subjects>
                 </configuration>
                 <goals>
                     <goal>register</goal>
+                    <goal>test-compatibility</goal>
                 </goals>
-
             </plugin>
         </plugins>
     </build>

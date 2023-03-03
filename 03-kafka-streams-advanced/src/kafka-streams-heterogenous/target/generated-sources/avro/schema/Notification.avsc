@@ -1,0 +1,9 @@
+{
+  "type" : "record",
+  "name" : "Notification",
+  "namespace" : "com.trivadis.kafkaws.avro.v1",
+  "fields" : [ {
+    "name" : "message",
+    "type" : [ "null", "string" ]
+  } ]
+}

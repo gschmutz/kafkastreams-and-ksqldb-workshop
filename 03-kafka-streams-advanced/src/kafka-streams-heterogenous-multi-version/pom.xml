@@ -66,37 +66,10 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.14.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j.version}</version>
          </dependency>
-<!--
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-streams-test-utils</artifactId>
-            <version>${kafka.version}</version>
-            <scope>test</scope>
-        </dependency>
--->
-
-
-        <dependency>
-            <groupId>com.bakdata.fluent-kafka-streams-tests</groupId>
-            <artifactId>fluent-kafka-streams-tests-junit5</artifactId>
-            <version>2.8.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -146,9 +119,28 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>com.trivadis.plugins</groupId>
+                <artifactId>avdl2avsc-maven-plugin</artifactId>
+                <version>1.0.1-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>genschema</goal>
+                        </goals>
+                        <configuration>
+                            <inputAvdlDirectory>${basedir}/src/main/avdl</inputAvdlDirectory>
+                            <outputSchemaDirectory>${basedir}/target/generated-sources/avro/schema
+                            </outputSchemaDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>1.9.2</version>
+                <version>${avro.version}</version>
                 <executions>
                     <execution>
                         <id>schemas</id>
@@ -160,28 +152,30 @@
                             <excludes>
                                 <exclude>**/mapred/tether/**</exclude>
                             </excludes>
-                            <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory>
+                            <sourceDirectory>${basedir}/target/generated-sources/avro/schema</sourceDirectory>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry-maven-plugin</artifactId>
-                <version>4.0.0</version>
+                <version>3.2.0</version>
                 <configuration>
                     <schemaRegistryUrls>
-                        <param>http://dataplatform:8081</param>
+                        <param>http://${env.DATAPLATFORM_IP}:8081</param>
                     </schemaRegistryUrls>
                     <subjects>
-                        <test-kstream-input-topic-value>src/main/java/com/trivadis/kafkaws/kstream/avro/MyData.avsc</test-kstream-input-topic-value>
+                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/v1/NotificationSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
+                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/v1/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
+                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v2.AlertSentEvent>target/generated-sources/avro/schema/v2/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v2.AlertSentEvent>
+                        <test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/v1/Message.avsc</test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>
                     </subjects>
                 </configuration>
                 <goals>
                     <goal>register</goal>
+                    <goal>test-compatibility</goal>
                 </goals>
-
             </plugin>
         </plugins>
     </build>

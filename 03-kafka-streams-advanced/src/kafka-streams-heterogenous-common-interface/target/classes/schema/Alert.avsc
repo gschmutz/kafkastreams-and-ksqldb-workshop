@@ -1,0 +1,12 @@
+{
+  "type" : "record",
+  "name" : "Alert",
+  "namespace" : "com.trivadis.kafkaws.avro.v1",
+  "fields" : [ {
+    "name" : "alert",
+    "type" : "string"
+  }, {
+    "name" : "severity",
+    "type" : "string"
+  } ]
+}

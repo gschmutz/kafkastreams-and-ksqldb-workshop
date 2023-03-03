@@ -1,0 +1,29 @@
+{
+  "type" : "record",
+  "name" : "Message",
+  "namespace" : "com.trivadis.kafkaws.avro.v1",
+  "fields" : [ {
+    "name" : "context",
+    "type" : {
+      "type" : "record",
+      "name" : "Context",
+      "fields" : [ {
+        "name" : "id",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "uuid"
+        }
+      }, {
+        "name" : "when",
+        "type" : {
+          "type" : "long",
+          "logicalType" : "timestamp-millis"
+        }
+      } ]
+    }
+  }, {
+    "name" : "message",
+    "type" : "string"
+  } ],
+  "java-interface" : "com.trivadis.kafkaws.kstream.heterogenous.ContextProvider"
+}
