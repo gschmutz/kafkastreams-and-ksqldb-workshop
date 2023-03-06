@@ -193,9 +193,9 @@
                         <param>http://${env.DATAPLATFORM_IP}:8081</param>
                     </schemaRegistryUrls>
                     <subjects>
-                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/NotificationSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
-                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
-                        <test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/Message.avsc</test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>
+                        <kstream-heterogenous-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/NotificationSentEvent.avsc</kstream-heterogenous-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
+                        <kstream-heterogenous-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/AlertSentEvent.avsc</kstream-heterogenous-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
+                        <kstream-heterogenous-output-topic-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/Message.avsc</kstream-heterogenous-output-topic-com.trivadis.kafkaws.avro.v1.Message>
                     </subjects>
                 </configuration>
                 <goals>

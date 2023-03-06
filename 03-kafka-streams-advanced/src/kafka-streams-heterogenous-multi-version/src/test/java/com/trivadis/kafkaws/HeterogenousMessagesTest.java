@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 public class HeterogenousMessagesTest {
 
-    private final static String TOPIC = "test-kstream-input-topic";
+    private final static String TOPIC = "kstream-heterogenous-multi-version-input-topic";
     private final static String BOOTSTRAP_SERVERS =
             "dataplatform:9092, dataplatform:9093, dataplatform:9094";
     private final static String SCHEMA_REGISTRY_URL = "http://dataplatform:8081";

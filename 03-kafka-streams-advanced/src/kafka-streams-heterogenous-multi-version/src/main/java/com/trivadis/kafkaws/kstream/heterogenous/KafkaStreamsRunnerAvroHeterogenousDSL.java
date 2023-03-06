@@ -20,23 +20,14 @@ import java.util.Properties;
 
 public class KafkaStreamsRunnerAvroHeterogenousDSL {
 
-    private static <VT extends SpecificRecord> SpecificAvroSerde<VT> createSerde(String schemaRegistryUrl) {
-        SpecificAvroSerde<VT> serde = new SpecificAvroSerde<>();
-        Map<String, String> serdeConfig = Collections
-                .singletonMap(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-        serde.configure(serdeConfig, false);
-        return serde;
-    }
-
     public static void main(String[] args) {
         final String schemaRegistryUrl = "http://dataplatform:8081";
-        //final SpecificAvroSerde<MyData> myDataSerde = createSerde(schemaRegistryUrl);
 
         // the builder is used to construct the topology
         StreamsBuilder builder = new StreamsBuilder();
 
-        // read from the source topic, "test-kstream-input-topic"
-        KStream<Void, SpecificRecord> stream = builder.stream("test-kstream-input-topic");
+        // read from the source topic, "kstream-heterogenous-multi-version-input-topic"
+        KStream<Void, SpecificRecord> stream = builder.stream("kstream-heterogenous-multi-version-input-topic");
 
         // for each record that appears in the source topic,
         // print the value
@@ -70,7 +61,7 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
             return message;
         });
 
-        outputStream.to("test-kstream-output-topic");
+        outputStream.to("kstream-heterogenous-multi-version-output-topic");
 
         // set the required properties for running Kafka Streams
         Properties config = new Properties();
