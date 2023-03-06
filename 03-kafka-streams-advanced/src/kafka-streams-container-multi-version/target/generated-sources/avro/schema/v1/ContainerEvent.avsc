@@ -1,0 +1,45 @@
+{
+  "type" : "record",
+  "name" : "ContainerEvent",
+  "namespace" : "com.trivadis.kafkaws.avro.v1",
+  "fields" : [ {
+    "name" : "context",
+    "type" : {
+      "type" : "record",
+      "name" : "Context",
+      "fields" : [ {
+        "name" : "id",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "uuid"
+        }
+      }, {
+        "name" : "when",
+        "type" : {
+          "type" : "long",
+          "logicalType" : "timestamp-millis"
+        }
+      } ]
+    }
+  }, {
+    "name" : "event",
+    "type" : [ {
+      "type" : "record",
+      "name" : "Notification",
+      "fields" : [ {
+        "name" : "message",
+        "type" : [ "null", "string" ]
+      } ]
+    }, {
+      "type" : "record",
+      "name" : "Alert",
+      "fields" : [ {
+        "name" : "alert",
+        "type" : "string"
+      }, {
+        "name" : "severity",
+        "type" : "string"
+      } ]
+    } ]
+  } ]
+}

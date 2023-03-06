@@ -1,0 +1,12 @@
+@namespace("com.trivadis.kafkaws.avro.v1")
+protocol ContainerEventProtocol {
+	import idl "../v1/Context-v1.avdl";
+	import idl "../v1/Notification-v1.avdl";
+	import idl "../v1/Alert-v1.avdl";
+	import idl "Alert-v2.avdl";
+
+    record ContainerEvent {
+		Context context;
+		union{ Notification, com.trivadis.kafkaws.avro.v1.Alert, com.trivadis.kafkaws.avro.v2.Alert } event;
+	}
+}

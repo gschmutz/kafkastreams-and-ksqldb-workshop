@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>kafka-streams-heterogenous-multi-version</artifactId>
+    <artifactId>kafka-streams-container-multi-version</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>

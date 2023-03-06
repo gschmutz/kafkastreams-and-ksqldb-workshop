@@ -1,0 +1,8 @@
+@namespace("com.trivadis.kafkaws.avro.v1")
+
+protocol ContextProtocol {
+	record Context {
+		uuid id;
+		timestamp_ms when;
+	}
+}
