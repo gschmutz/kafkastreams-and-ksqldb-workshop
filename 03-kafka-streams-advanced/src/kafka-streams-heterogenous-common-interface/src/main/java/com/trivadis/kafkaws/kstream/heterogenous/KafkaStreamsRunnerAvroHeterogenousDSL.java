@@ -35,8 +35,8 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
         // the builder is used to construct the topology
         StreamsBuilder builder = new StreamsBuilder();
 
-        // read from the source topic, "test-kstream-input-topic"
-        KStream<Void, SpecificRecord> stream = builder.stream("test-kstream-input-topic");
+        // read from the source topic, "kstream-hetrogen-common-interface-input-topic"
+        KStream<Void, ContextProvider> stream = builder.stream("kstream-hetrogen-common-interface-input-topic");
 
         // treat it as a ContextProvider
         stream.foreach(
@@ -46,7 +46,7 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
                 });
 
         // transform the values to upper case
-        KStream<Void, SpecificRecord> outputStream = stream.mapValues(value -> {
+        KStream<Void, Message> outputStream = stream.mapValues(value -> {
             Message message = null;
             if (value instanceof AlertSentEvent) {
                 AlertSentEvent ase = (AlertSentEvent) value;
@@ -64,7 +64,7 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
             return message;
         });
 
-        outputStream.to("test-kstream-output-topic");
+        outputStream.to("kstream-hetrogen-common-interface-output-topic");
 
         // set the required properties for running Kafka Streams
         Properties config = new Properties();
