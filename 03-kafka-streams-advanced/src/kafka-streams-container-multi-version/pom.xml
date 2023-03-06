@@ -166,10 +166,10 @@
                         <param>http://${env.DATAPLATFORM_IP}:8081</param>
                     </schemaRegistryUrls>
                     <subjects>
-                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/v1/NotificationSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
-                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/v1/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
-                        <test-kstream-input-topic-com.trivadis.kafkaws.avro.v2.AlertSentEvent>target/generated-sources/avro/schema/v2/AlertSentEvent.avsc</test-kstream-input-topic-com.trivadis.kafkaws.avro.v2.AlertSentEvent>
-                        <test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/v1/Message.avsc</test-kstream-output-topic-com.trivadis.kafkaws.avro.v1.Message>
+                        <kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>target/generated-sources/avro/schema/v1/NotificationSentEvent.avsc</kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v1.NotificationSentEvent>
+                        <kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v1.AlertSentEvent>target/generated-sources/avro/schema/v1/AlertSentEvent.avsc</kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v1.AlertSentEvent>
+                        <kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v2.AlertSentEvent>target/generated-sources/avro/schema/v2/AlertSentEvent.avsc</kstream-container-multi-version-input-topic-v1-com.trivadis.kafkaws.avro.v2.AlertSentEvent>
+                        <kstream-container-multi-version-output-topic-v1-com.trivadis.kafkaws.avro.v1.Message>target/generated-sources/avro/schema/v1/Message.avsc</kstream-container-multi-version-output-topic-v1-com.trivadis.kafkaws.avro.v1.Message>
                     </subjects>
                 </configuration>
                 <goals>

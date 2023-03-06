@@ -21,7 +21,7 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
         StreamsBuilder builder = new StreamsBuilder();
 
         // read from the source topic, "test-kstream-input-topic"
-        KStream<Void, ContainerEvent> stream = builder.stream("test-kstream-input-container-topic-v1");
+        KStream<Void, ContainerEvent> stream = builder.stream("kstream-container-multi-version-input-topic-v1");
 
         // for each record that appears in the source topic,
         // print the value
@@ -58,7 +58,7 @@ public class KafkaStreamsRunnerAvroHeterogenousDSL {
             return message;
         });
 
-        outputStream.to("test-kstream-output-topic");
+        outputStream.to("kstream-container-multi-version-output-topic-v1");
 
         // set the required properties for running Kafka Streams
         Properties config = new Properties();
