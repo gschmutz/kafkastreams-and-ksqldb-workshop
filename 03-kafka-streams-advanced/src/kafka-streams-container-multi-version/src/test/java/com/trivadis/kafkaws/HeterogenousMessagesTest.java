@@ -45,7 +45,7 @@ public class HeterogenousMessagesTest {
                 .setAlert("Alert Message v1")
                 .setSeverity("HIGH")
                 .build();
-        AlertSentEvent alertSentEvent = AlertSentEvent.newBuilder()
+        Alert alertSentEvent = AlertSentEvent.newBuilder()
                 .setContext(Context.newBuilder().setId(UUID.randomUUID()).setWhen(Instant.now()).build())
                 .setAlert(alert)
                 .build();
