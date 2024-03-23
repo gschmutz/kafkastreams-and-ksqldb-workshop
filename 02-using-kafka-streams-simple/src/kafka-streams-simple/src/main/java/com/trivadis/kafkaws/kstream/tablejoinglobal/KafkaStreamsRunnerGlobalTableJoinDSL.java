@@ -1,21 +1,19 @@
-package com.trivadis.kafkaws.kstream.count;
+package com.trivadis.kafkaws.kstream.tablejoinglobal;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.config.TopicConfig;
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 
-import java.time.Duration;
-import java.time.ZoneId;
 import java.util.Properties;
 
-public class KafkaStreamsRunnerCountDSL {
+public class KafkaStreamsRunnerGlobalTableJoinDSL {
 
     public static void main(String[] args) {
         // the builder is used to construct the topology
@@ -24,26 +22,24 @@ public class KafkaStreamsRunnerCountDSL {
         // read from the source topic, "test-kstream-input-topic"
         KStream<String, String> stream = builder.stream("test-kstream-input-topic");
 
-        KGroupedStream<String,String> groupedByKey = stream.groupByKey();
-        KTable<String, Long> counts = groupedByKey.count(Materialized.as("count"));
+        // read from the source topic, "test-kstream-input-topic"
+        GlobalKTable<String, String> globalTable = builder.globalTable("test-kstream-compacted-topic");
 
-        counts.toStream().print(Printed.<String, Long>toSysOut().withLabel("counts"));
+        // join the stream with the gobal table
+        KStream<String, String> joined = stream.join(globalTable
+                                                    , (k,v) -> v            // keyvalue mapper
+                                                    ,(s,t) -> String.join (":",s, t));
 
-        final Serde<String> stringSerde = Serdes.String();
-        final Serde<Long> longSerde = Serdes.Long();
-        counts.toStream().to("test-kstream-output-topic", Produced.with(stringSerde, longSerde));
+        // output the joined values
+        joined.to("test-kstream-output-topic", Produced.with(Serdes.String(), Serdes.String()));
 
         // set the required properties for running Kafka Streams
         Properties config = new Properties();
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "count");
-        config.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/count");
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tablejoin");
         config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dataplatform:9092");
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
-        // configure max.message.bytes for internal topics
-        //config.put(StreamsConfig.TOPIC_PREFIX + TopicConfig.MAX_MESSAGE_BYTES_CONFIG, 2000);
 
         // build the topology and start streaming
         Topology topology = builder.build();

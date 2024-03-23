@@ -401,6 +401,302 @@ You can use the [Kafka Streams Topology Visualizer](https://zz85.github.io/kafka
 
 You can see that the compacted topic `test-kstream-compacted-topic` is read into a state store and the `test-kstream-input-topic` is joined against that state store to enrich the stream.   
 
+## Joining a stream to a versioned table (versioned state store)
+
+In this section we will join a data stream again with static data, but this time we version the state store, so that late arrivals will not be joined to the latest version of the table data but to the one valid for the given timestamp of the record (message) from the stream. 
+
+The streaming data will still come in through the `test-kstream-input-topic` topic and we will enrich/join it with the data from the `test-kstream-compacted-topic`.  
+
+Create a new package `com.trivadis.kafkaws.kstream.tablejoinversioned` and in it a Java class `KafkaStreamsRunnerTableJoinDSL `. 
+
+Add the following code for the implementation
+
+```java
+package com.trivadis.kafkaws.kstream.tablejoinversioned;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.state.Stores;
+
+import java.time.Duration;
+import java.util.Properties;
+
+public class KafkaStreamsRunnerTableJoinVersionedDSL {
+
+    public static void main(String[] args) {
+        // the builder is used to construct the topology
+        StreamsBuilder builder = new StreamsBuilder();
+
+        // read from the source topic, "test-kstream-input-topic"
+        KStream<String, String> stream = builder.stream("test-kstream-input-topic");
+
+        // read from the source topic, "test-kstream-input-topic"
+        KTable<String, String> table = builder.table("test-kstream-compacted-topic"
+                                                    , Materialized.as(Stores.persistentVersionedKeyValueStore("table-join-versioned", Duration.ofHours(2))));
+
+        // join the stream with the table
+        KStream<String, String> joined = stream.join(table, (s,t) -> String.join (":",s, t));
+
+        // output the joined values
+        joined.to("test-kstream-output-topic", Produced.with(Serdes.String(), Serdes.String()));
+
+        // set the required properties for running Kafka Streams
+        Properties config = new Properties();
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tablejoin");
+        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dataplatform:9092");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+
+        // build the topology and start streaming
+        Topology topology = builder.build();
+        System.out.println(topology.describe());
+        KafkaStreams streams = new KafkaStreams(topology, config);
+        streams.start();
+
+        // close Kafka Streams when the JVM shuts down (e.g. SIGTERM)
+        Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
+    }
+}
+```
+
+To produce data, we cannot use `kcat`, as it does not support producing records with timestamp. Therefore we will implement a simple Java client application, which produces both the date for the table (state store) and the streaming data. 
+
+Create another Java class `MessageGenerator` and add the following code for the implementation
+
+```java
+package com.trivadis.kafkaws.kstream.tablejoinversioned;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
+import java.time.LocalDateTime;
+import java.util.Properties;
+
+public class MessageGenerator {
+
+    public static void main(String[] args) throws InterruptedException {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "dataplatform:9092");
+        props.put("acks", "all");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        Producer<String, String> producer = new KafkaProducer<>(props);
+        producer.send(new ProducerRecord<String, String>("test-kstream-compacted-topic", "A", "Entity A"));
+        producer.send(new ProducerRecord<String, String>("test-kstream-compacted-topic", "B", "Entity B"));
+
+        long timestamp = System.currentTimeMillis();
+
+        Thread.sleep(1000);
+
+        producer.send(new ProducerRecord<String, String>("test-kstream-input-topic", "A", "AAA"));
+        producer.send(new ProducerRecord<String, String>("test-kstream-input-topic", "B", "BBB"));
+
+        // produce an update for A + B
+        producer.send(new ProducerRecord<String, String>("test-kstream-compacted-topic", "A", "Object A"));
+        producer.send(new ProducerRecord<String, String>("test-kstream-compacted-topic", "B", "Object B"));
+
+        Thread.sleep(1000);
+
+        // produce 2 more records
+        producer.send(new ProducerRecord<String, String>("test-kstream-input-topic", "A", "AAA"));
+        producer.send(new ProducerRecord<String, String>("test-kstream-input-topic", "B", "BBB"));
+
+        Thread.sleep(1000);
+
+        // produce with old timestamp (produces Entity B in join)
+        producer.send(new ProducerRecord<String, String>("test-kstream-input-topic", null, timestamp, "B", "BBB"));
+
+        producer.close();
+
+    }
+}
+```
+
+We first produces the state data for `(A) Entity A` and `(B) Entity B`. 
+
+Then we produce two records into the topic for the stream, which will join to A and B. 
+
+Now we update the value of the state data to `(A) Object A` and `(B) Object B`.
+
+Again we produce two records into the topic for the stream, which will join to A and B. 
+Additionally we also produce another record with a lookup to B, but with a timestamp before the update of the state data. We will see that this record will be joined to `(B) Entity B` and not to the latest value, which is `(B) Object B`.
+
+Start the program and in another terminal window run a `kcat` consumer on the output topic
+
+```bash
+kcat -b dataplatform:9092 -t test-kstream-output-topic -o end -f "%k,%s\n" -q
+```
+
+Now run the `MessageGenerator` class. 
+
+You should see the following output in the console from the `kcat` consumer
+
+```bash
+~>kcat -b dataplatform:9092 -t test-kstream-output-topic -o end -f "%k,%s\n" -q                                                                          
+B,BBB:Entity B
+A,AAA:Entity A
+A,AAA:Object A
+B,BBB:Object B
+B,BBB:Entity B
+```
+
+The last record shows the temporal join in action: thanks to the versioned state store, the "late arrival" record is joined to the previous version of B and not to the lastest version. 
+
+## Joining a stream to a global table
+
+Now let's use Kafka Streams to perform joins. In this section we will join a data stream with some static data, also known as Stream-GlobalTable Join. In contrast to a `KTable` (what we have used in the previous section) that is partitioned over all KafkaStreams instances, a `GlobalKTable` is fully replicated per KafkaStreams instance. Every partition of the underlying topic is consumed by each `GlobalKTable`, such that the full set of data is available in every KafkaStreams instance.
+
+It is in fact an enrichment of a Stream by some static data (a lookup of a static dataset). The streaming data will still come in through the `test-kstream-input-topic` topic and we will enrich it with the data from the `test-kstream-compacted-topic`.  
+
+Create a new package `com.trivadis.kafkaws.kstream.tablejoin` and in it a Java class `KafkaStreamsRunnerTableJoinDSL `. 
+
+Add the following code for the implementation
+
+```java
+package com.trivadis.kafkaws.kstream.tablejoinglobal;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
+
+import java.util.Properties;
+
+public class KafkaStreamsRunnerGlobalTableJoinDSL {
+
+    public static void main(String[] args) {
+        // the builder is used to construct the topology
+        StreamsBuilder builder = new StreamsBuilder();
+
+        // read from the source topic, "test-kstream-input-topic"
+        KStream<String, String> stream = builder.stream("test-kstream-input-topic");
+
+        // read from the source topic, "test-kstream-input-topic"
+        GlobalKTable<String, String> globalTable = builder.globalTable("test-kstream-compacted-topic");
+
+        // join the stream with the gobal table
+        KStream<String, String> joined = stream.join(globalTable
+                                                    , (k,v) -> v            // keyvalue mapper
+                                                    ,(s,t) -> String.join (":",s, t));
+
+        // output the joined values
+        joined.to("test-kstream-output-topic", Produced.with(Serdes.String(), Serdes.String()));
+
+        // set the required properties for running Kafka Streams
+        Properties config = new Properties();
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, "tablejoin");
+        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dataplatform:9092");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+
+        // build the topology and start streaming
+        Topology topology = builder.build();
+        System.out.println(topology.describe());
+        KafkaStreams streams = new KafkaStreams(topology, config);
+        streams.start();
+
+        // close Kafka Streams when the JVM shuts down (e.g. SIGTERM)
+        Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
+    }
+}
+```
+
+First let's add the "static" data to the compacted log topic. This is the data we are doing the lookup against. In a terminal window run the following `kcat` command
+
+```bash
+kcat -b dataplatform:9092 -t test-kstream-compacted-topic -P -K , 
+```
+
+produce some values with `<key>,<value>` syntax, such as
+
+```bash
+AAA,Entity A
+BBB,Entity B
+CCC,Entity C
+DDD,Entity D
+```
+
+As we are reusing the topics from the previous solution, you might want to clear (empty) both the input and the out topic before starting the program. You can easily do that using AKHQ (navigate to the topic, i.e. <http://dataplatform:28107/ui/docker-kafka-server/topic/test-kstream-input-topic> and click on **Empty Topic** on the bottom). 
+
+Start the program and in another terminal window run a `kcat` consumer on the output topic
+
+```bash
+kcat -b dataplatform:9092 -t test-kstream-output-topic -o end -f "%k,%s\n" -q
+```
+
+with that in place, in a 3rd terminal window, produce some messages using `kcat` in producer mode on the input topic
+
+```bash
+kcat -b dataplatform:9092 -t test-kstream-input-topic -P -K , 
+```
+
+produce some values with `<key>,<value>` syntax, such as
+
+```bash
+A,AAA
+B,BBB
+C,CCC
+A,AAA
+D,DDD
+A,AAA
+```
+
+immediately the count should start to add up for each key and the output from the consumer should be similar to the one shown below
+
+```bash
+A,AAA;Entity A
+B,BBB;Entity B
+C,CCC;Entity C
+A,AAA;Entity A
+D,DDD;Entity D
+A,AAA;Entity A
+```
+
+In this example we also use the `Topology.describe()` command, which will show a string representation of the Kafka Streams topology. 
+
+```
+Topologies:
+   Sub-topology: 0
+    Source: KSTREAM-SOURCE-0000000000 (topics: [test-kstream-input-topic])
+      --> KSTREAM-LEFTJOIN-0000000004
+    Processor: KSTREAM-LEFTJOIN-0000000004 (stores: [])
+      --> KSTREAM-SINK-0000000005
+      <-- KSTREAM-SOURCE-0000000000
+    Sink: KSTREAM-SINK-0000000005 (topic: test-kstream-output-topic)
+      <-- KSTREAM-LEFTJOIN-0000000004
+
+  Sub-topology: 1 for global store (will not generate tasks)
+    Source: KSTREAM-SOURCE-0000000002 (topics: [test-kstream-compacted-topic])
+      --> KTABLE-SOURCE-0000000003
+    Processor: KTABLE-SOURCE-0000000003 (stores: [test-kstream-compacted-topic-STATE-STORE-0000000001])
+      --> none
+      <-- KSTREAM-SOURCE-0000000002
+```
+
+You can use the [Kafka Streams Topology Visualizer](https://zz85.github.io/kafka-streams-viz/) utility to visualize the topology in a graphical manner. Copy the string representation into the **Input Kafka Topology** field and click **Update**. You should a visualization like the one below
+
+![Alt Image Text](./images/kafka-streams-topology-visualizer-join-global.png "Kafka Streams Topology Visulizer")
+
+You can see that the compacted topic `test-kstream-compacted-topic` is read into a state store and the `test-kstream-input-topic` is joined against that state store to enrich the stream.  
+
 ## Joining a stream to another stream
 
 Now let's use Kafka Streams to perform joins. In this example we will join a data stream with another data stream, also known as Stream-Stream Join. It is in fact an enrichment of a Stream by some static data (a lookup of a static dataset). The streaming data will still come in through the `test-kstream-input-topic` topic and we will join it with data from the `test-kstream-input2-topic `.  
