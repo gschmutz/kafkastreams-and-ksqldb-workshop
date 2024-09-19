@@ -1,0 +1,1 @@
+(function(a){a.fn.center=function(){return this.each(function(){a(this).css({position:"absolute",top:(a(window).height()-a(this).outerHeight())/2+a(window).scrollTop()+"px",left:(a(window).width()-a(this).outerWidth())/2+a(window).scrollLeft()+"px"})})}})(jQuery);

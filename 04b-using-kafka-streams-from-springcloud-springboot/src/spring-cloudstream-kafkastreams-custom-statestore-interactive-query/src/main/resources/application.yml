@@ -6,25 +6,42 @@ spring:
     name: "spring-boot-kafkastreams"
 
   cloud:
+    function.definition: collect;enrich
+
     stream:
       bindings:
-        process-in-0:
+        collect-in-0:
           destination: test-kstream-spring-cloudstream-input-topic
-        process-out-0:
+        collect-out-0:
           destination: test-kstream-spring-cloudstream-output-topic
+        enrich-in-0:
+          destination: test-kstream-spring-cloudstream-input-enrich-topic
+        enrich-in-1:
+          destination: test-kstream-spring-cloudstream-output-topic
+        enrich-out-0:
+          destination: test-kstream-spring-cloudstream-output-enrich-topic
 
       kafka:
         streams.binder:
           applicationId: spring-boot-springcloud-kafkastreams
+          functions:
+            collect.applicationId: spring-boot-springcloud-kafkastreams-collect
+            enrich.applicationId: spring-boot-springcloud-kafkastreams-enrich
+          stateStoreRetry:
+            maxAttempts: 10
+            backOffInterval: 1000
+
           configuration:
             commit.interval.ms: 100
             cache.max.bytes.buffering: 0
             default.key.serde: org.apache.kafka.common.serialization.Serdes$VoidSerde
             default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-            #topic.max.message.bytes: 2000
+            application.server: localhost:8081
 
   kafka:
     bootstrap-servers: dataplatform:9092
+
+  main.allow-circular-references: true
 
 logging:
   level:

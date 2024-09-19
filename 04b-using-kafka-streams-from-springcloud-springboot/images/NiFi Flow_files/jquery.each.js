@@ -1,0 +1,1 @@
+(function(b){var a=b.each;b.each=function(d,e,c){if(typeof d!=="undefined"&&d!==null){return a.call(this,d,e,c)}return d}})(jQuery);

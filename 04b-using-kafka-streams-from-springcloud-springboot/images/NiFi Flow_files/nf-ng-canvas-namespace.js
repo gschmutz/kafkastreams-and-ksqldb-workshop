@@ -1,0 +1,1 @@
+if(!nf.ng.Canvas){nf.ng.Canvas={}};
